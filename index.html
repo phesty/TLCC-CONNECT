@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TLCC CONNECT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Auth Container */
+        .auth-container {
+            background: rebeccapurple;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .logo {
+            line-height: 0.7;
+        }
+
+        .logo h1 {
+            color: #000000;
+            text-align: center;
+            font-size: 40px;
+        }
+
+        .logo h2 {
+            padding-left: 55px;
+            color: #000000;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Main Content */
+        .content {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: none;
+        }
+
+        .content.show {
+            display: block;
+        }
+
+        .auth-container.hide {
+            display: none;
+        }
+
+        /* Page Containers */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Form Styles */
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            padding-left: 10px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            display: flow;
+            align-items: center;
+            width: 100%;
+            padding: 15px;
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            /* box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); */
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Contact List Styles */
+        .search-bar {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 45px 15px 20px;
+            border-radius: 15px;
+            border: none;
+            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .filter-bar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .filter-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .contact-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .contact-card:active {
+            transform: scale(0.98);
+        }
+
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .contact-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+
+        .contact-status {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .contact-info {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .info-icon {
+            font-size: 18px;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .call-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .email-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .mark-called-btn {
+            background: #f3f4f6;
+            color: #666;
+        }
+
+        .mark-called-btn.called {
+            background: #d1fae5;
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .called-info {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #059669;
+        }
+
+        .called-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 8px;
+            cursor: pointer;
+            color: #999;
+            border: none;
+            background: none;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Loading & Messages */
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .user-email {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="logo">
+            <h1>tlcc</h1> 
+            <h2>connect.</h2>
+        </div>
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden until logged in) -->
+    <div id="mainApp" style="display: none;">
+        <div class="header">
+            <div>
+                <h1>📇 TLCC CONNECT</h1>
+                <div class="user-email" id="userEmail"></div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="content show">
+            <!-- Add Contact Page -->
+            <div class="page active" id="addPage">
+                <div class="form-card">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">➕ Add New Contact</h2>
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Other Names</label>
+                            <input type="text" id="otherNames">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone *</label>
+                            <input type="tel" id="phone" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Alternative Phone</label>
+                            <input type="tel" id="altPhone">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status *</label>
+                            <select id="status" required>
+                                <option value="">Select status...</option>
+                                <option value="Regular Attendee">Regular Attendee</option>
+                                <option value="Returning Visitor">Returning Visitor</option>
+                                <option value="First Time Guest">First Time Guest</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Age Group</label>
+                            <select id="ageGroup">
+                                <option value="">Select age group...</option>
+                                <option value="Youth">Youth (0-17)</option>
+                                <option value="Young Adult">Young Adult (18-35)</option>
+                                <option value="Adult">Adult (36-55)</option>
+                                <option value="Senior">Senior (56+)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select id="gender">
+                                <option value="">Select gender...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            ✅ Add Contact
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- View Contacts Page -->
+            <div class="page" id="viewPage">
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterByStatus('All')">All</button>
+                    <button class="filter-btn" onclick="filterByStatus('Regular Attendee')">Regular Attendee</button>
+                    <button class="filter-btn" onclick="filterByStatus('Returning Visitor')">Returning Visitor</button>
+                    <button class="filter-btn" onclick="filterByStatus('First Time Guest')">First Time Guest</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search contacts...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div id="contactsList">
+                    <div class="loading">Loading contacts...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="switchPage('add')">
+                <div class="nav-icon">➕</div>
+                <div class="nav-label">Add</div>
+            </button>
+            <button class="nav-item" onclick="switchPage('view')">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Contacts</div>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://qoaruwyvvjmsxbnhgbns.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_LdiYXDLNwWqNt90rXEu-kw_2A2sif9X';
+        const TABLE_NAME = 'Contact list';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ============================================
+        // AUTH MANAGEMENT
+        // ============================================
+        let currentUser = null;
+
+        // Check if user is already logged in
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                showMainApp();
+            }
+        });
+
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                currentUser = session.user;
+                showMainApp();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                showAuthScreen();
+            }
+        });
+
+        function showMainApp() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('userEmail').textContent = currentUser.email;
+            loadContacts();
+        }
+
+        function showAuthScreen() {
+            document.getElementById('authContainer').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                showMessage('❌ ' + error.message, 'error');
+            } else {
+                showMessage('✅ Login successful!', 'success');
+            }
+        });
+
+        // Logout
+        async function logout() {
+            await supabase.auth.signOut();
+            showMessage('👋 Logged out successfully', 'success');
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            if (page === 'add') {
+                document.getElementById('addPage').classList.add('active');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else {
+                document.getElementById('viewPage').classList.add('active');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                loadContacts();
+            }
+        }
+
+        // ============================================
+        // SHOW MESSAGE
+        // ============================================
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message show ${type}`;
+            setTimeout(() => msg.classList.remove('show'), 3000);
+        }
+
+        // ============================================
+        // ADD CONTACT
+        // ============================================
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Saving...';
+
+            const contactData = {
+                'First Name': document.getElementById('firstName').value,
+                'Last Name': document.getElementById('lastName').value,
+                'Other names': document.getElementById('otherNames').value,
+                'Phone': document.getElementById('phone').value,
+                'Alt Phone': document.getElementById('altPhone').value,
+                'Email': document.getElementById('email').value,
+                'Status': document.getElementById('status').value,
+                'Age group': document.getElementById('ageGroup').value,
+                'Gender': document.getElementById('gender').value,
+                'date added': new Date().toISOString(),
+                'Called': false,
+                'Date Called': null
+            };
+
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .insert([contactData]);
+
+            if (error) {
+                showMessage('❌ Error adding contact: ' + error.message, 'error');
+                console.error(error);
+            } else {
+                showMessage('✅ Contact added successfully!', 'success');
+                document.getElementById('contactForm').reset();
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = '✅ Add Contact';
+        });
+
+        // ============================================
+        // LOAD CONTACTS
+        // ============================================
+        let allContacts = [];
+        let currentFilter = 'All';
+
+        async function loadContacts() {
+            const contactsList = document.getElementById('contactsList');
+            contactsList.innerHTML = '<div class="loading">Loading contacts...</div>';
+
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .select('*')
+                .order('date added', { ascending: false });
+
+            if (error) {
+                contactsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Error loading contacts</div></div>';
+                console.error(error);
+                return;
+            }
+
+            allContacts = data;
+            applyFilters();
+        }
+
+        // ============================================
+        // DISPLAY CONTACTS
+        // ============================================
+        function displayContacts(contacts) {
+            const contactsList = document.getElementById('contactsList');
+            
+            if (contacts.length === 0) {
+                contactsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div>No contacts found</div></div>';
+                return;
+            }
+
+            contactsList.innerHTML = contacts.map(contact => {
+                const calledInfo = contact['Called'] && contact['Date Called'] ? `
+                    <div class="called-info">
+                        <strong>✓ Called</strong>
+                        <div>By: ${contact['Called By'] || 'Unknown'}</div>
+                        <div>On: ${new Date(contact['Date Called']).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</div>
+                    </div>
+                ` : '';
+
+                return `
+                <div class="contact-card">
+                    <div class="contact-header">
+                        <div>
+                            <div class="contact-name">${contact['First Name']} ${contact['Last Name']}</div>
+                            ${contact['Other names'] ? `<div style="color: #999; font-size: 14px;">"${contact['Other names']}"</div>` : ''}
+                        </div>
+                        <div class="contact-status">${contact['Status']}</div>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="info-item">
+                            <span class="info-icon">📞</span>
+                            <span>${contact['Phone']}</span>
+                        </div>
+                        ${contact['Alt Phone'] ? `
+                        <div class="info-item">
+                            <span class="info-icon">📱</span>
+                            <span>${contact['Alt Phone']}</span>
+                        </div>` : ''}
+                        ${contact['Email'] ? `
+                        <div class="info-item">
+                            <span class="info-icon">📧</span>
+                            <span>${contact['Email']}</span>
+                        </div>` : ''}
+                        ${contact['Age group'] ? `
+                        <div class="info-item">
+                            <span class="info-icon">👤</span>
+                            <span>${contact['Age group']} • ${contact['Gender'] || 'N/A'}</span>
+                        </div>` : ''}
+                    </div>
+
+                    ${calledInfo}
+
+                    <div class="contact-actions">
+                        <button class="action-btn call-btn" onclick="makeCall('${contact['Phone']}', ${contact.id})">
+                            📞 Call
+                        </button>
+                        ${contact['Email'] ? `
+                        <button class="action-btn email-btn" onclick="sendEmail('${contact['Email']}')">
+                            ✉️ Email
+                        </button>` : ''}
+                        <button class="action-btn mark-called-btn ${contact['Called'] ? 'called' : ''}" onclick="toggleCalled(${contact.id}, ${contact['Called']})">
+                            ${contact['Called'] ? '✓ Called' : 'Mark Called'}
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ============================================
+        // FILTER BY STATUS
+        // ============================================
+        function filterByStatus(status) {
+            currentFilter = status;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === status) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            applyFilters();
+        }
+
+        // ============================================
+        // APPLY FILTERS
+        // ============================================
+        function applyFilters() {
+            let filtered = allContacts;
+            
+            // Apply status filter
+            if (currentFilter !== 'All') {
+                filtered = filtered.filter(contact => contact['Status'] === currentFilter);
+            }
+            
+            // Apply search if there's a search term
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(contact => 
+                    contact['First Name'].toLowerCase().includes(searchTerm) ||
+                    contact['Last Name'].toLowerCase().includes(searchTerm) ||
+                    (contact['Other names'] && contact['Other names'].toLowerCase().includes(searchTerm)) ||
+                    contact['Phone'].includes(searchTerm)
+                );
+            }
+            
+            displayContacts(filtered);
+        }
+
+        // ============================================
+        // SEARCH CONTACTS
+        // ============================================
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+        // ============================================
+        // MAKE CALL
+        // ============================================
+        function makeCall(phone, contactId) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        // ============================================
+        // SEND EMAIL
+        // ============================================
+        function sendEmail(email) {
+            window.location.href = `mailto:${email}`;
+        }
+
+        // ============================================
+        // TOGGLE CALLED STATUS
+        // ============================================
+        async function toggleCalled(contactId, currentStatus) {
+            const newStatus = !currentStatus;
+            
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .update({
+                    'Called': newStatus,
+                    'Date Called': newStatus ? new Date().toISOString() : null,
+                    'Called By': newStatus ? currentUser.email : null
+                })
+                .eq('id', contactId);
+
+            if (error) {
+                showMessage('Error updating status', 'error');
+                console.error(error);
+            } else {
+                showMessage(newStatus ? '✓ Marked as called' : 'Unmarked', 'success');
+                loadContacts();
+            }
+        }
+    </script>
+</body>
+</html>
