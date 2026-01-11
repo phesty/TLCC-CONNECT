@@ -87,27 +87,62 @@
             font-size: 20px;
         }
 
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: #f3f4f6;
-            border-radius: 10px;
+        /* Error Alert on Login Page */
+        .auth-error {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            color: #dc2626;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .auth-tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .auth-error.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Debug Console */
+        .debug-console {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-console.show {
+            display: block;
+        }
+
+        .debug-line {
+            margin-bottom: 5px;
+        }
+
+        .debug-error {
+            color: #ff4444;
+        }
+
+        .debug-success {
+            color: #00ff00;
+        }
+
+        .debug-info {
+            color: #00aaff;
         }
 
         /* Main Content */
@@ -185,8 +220,8 @@
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            /* box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); */
         }
+        
         .submit-btn:active {
             transform: scale(0.98);
         }
@@ -485,9 +520,13 @@
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <div class="logo">
-            <h1>tlcc</h1> 
-            <h2>connect.</h2>
-        </div>
+                <h1>tlcc</h1> 
+                <h2>connect.</h2>
+            </div>
+            
+            <!-- Error Alert -->
+            <div class="auth-error" id="authError"></div>
+            
             <!-- Login Form -->
             <form id="loginForm">
                 <div class="form-group">
@@ -498,8 +537,13 @@
                     <label>Password</label>
                     <input type="password" id="loginPassword" required>
                 </div>
-                <button type="submit" class="submit-btn">Login</button>
+                <button type="submit" class="submit-btn" id="loginBtn">Login</button>
             </form>
+
+            <!-- Debug Console -->
+            <div class="debug-console" id="debugConsole">
+                <div class="debug-line debug-info">🔍 Debug Console</div>
+            </div>
         </div>
     </div>
 
@@ -623,13 +667,44 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // ============================================
+        // DEBUG LOGGER
+        // ============================================
+        function debugLog(message, type = 'info') {
+            const console = document.getElementById('debugConsole');
+            console.classList.add('show');
+            const line = document.createElement('div');
+            line.className = `debug-line debug-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function showAuthError(message) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
+
+        // ============================================
         // SUPABASE CONFIGURATION
         // ============================================
         const SUPABASE_URL = 'https://qoaruwyvvjmsxbnhgbns.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_LdiYXDLNwWqNt90rXEu-kw_2A2sif9X';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYXJ1d3l2dmptc3hibmhnYm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTcwNzUsImV4cCI6MjA4MzY5MzA3NX0.AC9NwFwc0q9IJ8P3is-thwtMKpfH1C_MXtxS8oKpuic';
         const TABLE_NAME = 'Contact list';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        debugLog('Initializing TLCC CONNECT...', 'info');
+        debugLog(`Supabase URL: ${SUPABASE_URL}`, 'info');
+
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            debugLog('✓ Supabase client created successfully', 'success');
+        } catch (error) {
+            debugLog(`✗ Failed to create Supabase client: ${error.message}`, 'error');
+            showAuthError('Failed to initialize app. Check console.');
+        }
 
         // ============================================
         // AUTH MANAGEMENT
@@ -637,20 +712,30 @@
         let currentUser = null;
 
         // Check if user is already logged in
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+                debugLog(`✗ Session check error: ${error.message}`, 'error');
+            } else if (session) {
                 currentUser = session.user;
+                debugLog(`✓ Found existing session for: ${currentUser.email}`, 'success');
                 showMainApp();
+            } else {
+                debugLog('No existing session found', 'info');
             }
+        }).catch(err => {
+            debugLog(`✗ Session check failed: ${err.message}`, 'error');
         });
 
         // Listen for auth changes
         supabase.auth.onAuthStateChange((event, session) => {
+            debugLog(`Auth event: ${event}`, 'info');
             if (event === 'SIGNED_IN') {
                 currentUser = session.user;
+                debugLog(`✓ User signed in: ${currentUser.email}`, 'success');
                 showMainApp();
             } else if (event === 'SIGNED_OUT') {
                 currentUser = null;
+                debugLog('User signed out', 'info');
                 showAuthScreen();
             }
         });
@@ -670,23 +755,42 @@
         // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
+            debugLog(`Attempting login for: ${email}`, 'info');
 
-            if (error) {
-                showMessage('❌ ' + error.message, 'error');
-            } else {
-                showMessage('✅ Login successful!', 'success');
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    debugLog(`✗ Login failed: ${error.message}`, 'error');
+                    showAuthError(`Login failed: ${error.message}`);
+                    showMessage('❌ ' + error.message, 'error');
+                } else {
+                    debugLog(`✓ Login successful!`, 'success');
+                    showMessage('✅ Login successful!', 'success');
+                }
+            } catch (err) {
+                debugLog(`✗ Login exception: ${err.message}`, 'error');
+                showAuthError(`Error: ${err.message}`);
             }
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
         });
 
         // Logout
         async function logout() {
+            debugLog('Logging out...', 'info');
             await supabase.auth.signOut();
             showMessage('👋 Logged out successfully', 'success');
         }
